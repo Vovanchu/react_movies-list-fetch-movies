@@ -18,7 +18,6 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
   const [movieData, setMovieData] = useState<Movie | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean | null>(false);
-  const [addedMovies, setAddedMovies] = useState<boolean>(false);
 
   function mapMovieDataToMovie(data: MovieData): Movie {
     return {
@@ -35,9 +34,12 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!movie.trim()) {
+      return;
+    }
+
     setLoading(true);
-    setError(null);
-    setAddedMovies(false);
+    setError(false);
 
     try {
       const response = await getMovie(movie.trim());
@@ -46,9 +48,7 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
         setError(true);
         setMovieData(null);
       } else {
-        const mapped = mapMovieDataToMovie(response);
-
-        setMovieData(mapped);
+        setMovieData(mapMovieDataToMovie(response));
       }
     } finally {
       setLoading(false);
@@ -56,7 +56,6 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
   };
 
   const handleAdd = () => {
-    setAddedMovies(true);
     if (!movieData) {
       return;
     }
@@ -68,6 +67,10 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
 
       return [...prev, movieData];
     });
+
+    setMovie('');
+    setMovieData(null);
+    setError(false);
   };
 
   return (
@@ -108,13 +111,13 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
               data-cy="searchButton"
               type="submit"
               className={`button is-light ${loading ? 'is-loading' : ''}`}
-              disabled={!movie.trim()}
+              disabled={movie === ''}
             >
               Find a movie
             </button>
           </div>
 
-          {movieData && !error && !addedMovies ? (
+          {movieData && !error ? (
             <div className="control">
               <button
                 data-cy="addButton"
@@ -129,7 +132,7 @@ export const FindMovie: React.FC<FindMovieProps> = ({ setMovies }) => {
         </div>
       </form>
 
-      {movieData && !error && !addedMovies ? (
+      {movieData && !error ? (
         <div className="container" data-cy="previewContainer">
           <h2 className="title">Preview</h2>
           <MovieCard movie={movieData} />
